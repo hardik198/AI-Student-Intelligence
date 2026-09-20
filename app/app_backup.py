@@ -6,8 +6,22 @@
 import streamlit as st
 import os
 import sys
-from evaluation import get_evaluation
 
+from evaluation import get_evaluation
+from prediction import predict_student
+
+try:
+
+    from prediction import predict_student
+    from evaluation import get_evaluation
+
+    MODEL_AVAILABLE = True
+
+except Exception as e:
+
+    MODEL_AVAILABLE = False
+    MODEL_ERROR = str(e)
+    
 # ============================================================
 # PATH CONFIGURATION
 # ============================================================
@@ -34,7 +48,6 @@ if SRC_DIR not in sys.path:
 try:
 
     from prediction import predict_student
-    from evaluation import get_evaluation
 
     MODEL_AVAILABLE = True
 
@@ -63,41 +76,33 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-    :root { --bg:#07111f; --panel:#0d1b2d; --panel2:#10243b; --line:rgba(148,163,184,.16); --text:#f8fafc; --muted:#94a3b8; --accent:#67e8f9; --accent2:#818cf8; }
-    .stApp { background: radial-gradient(circle at 75% 0%, rgba(99,102,241,.16), transparent 30%), radial-gradient(circle at 15% 20%, rgba(34,211,238,.08), transparent 25%), var(--bg); font-family:Inter,sans-serif; }
-    [data-testid="stHeader"] { background:transparent; }
-    [data-testid="stSidebar"] { background:linear-gradient(180deg,#081423,#07111f); border-right:1px solid var(--line); }
-    [data-testid="stSidebar"] > div:first-child { padding-top:1.4rem; }
-    .brand-box { display:flex; align-items:center; gap:12px; padding:12px 8px 22px; }
-    .brand-icon { width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,#22d3ee,#6366f1);font-size:22px;box-shadow:0 10px 30px rgba(99,102,241,.25); }
-    .brand-title { color:#fff;font-size:17px;font-weight:800;line-height:1.1; } .brand-subtitle { color:#64748b;font-size:11px;margin-top:3px; }
-    .nav-label { color:#64748b;font-size:10px;font-weight:800;letter-spacing:1.5px;margin:4px 8px 10px; }
-    .sidebar-divider { height:1px;background:var(--line);margin:20px 0; }
-    .status-pill { display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 10px;font-size:10px;font-weight:800;letter-spacing:.7px; }
-    .status-pill span { width:7px;height:7px;border-radius:50%;display:inline-block; } .online { color:#67e8f9;background:rgba(34,211,238,.08); } .online span { background:#22d3ee;box-shadow:0 0 10px #22d3ee; } .offline { color:#fda4af;background:rgba(244,63,94,.08); } .offline span { background:#f43f5e; }
-    .hero { position:relative;overflow:hidden;border:1px solid var(--line);border-radius:26px;padding:42px 46px;margin:5px 0 24px;background:linear-gradient(135deg,rgba(15,34,56,.96),rgba(10,21,37,.88));box-shadow:0 25px 70px rgba(0,0,0,.22); }
-    .hero:after { content:'';position:absolute;width:280px;height:280px;border-radius:50%;right:-90px;top:-100px;background:radial-gradient(circle,rgba(103,232,249,.16),transparent 68%); }
-    .hero-eyebrow { color:#67e8f9;font-size:11px;font-weight:800;letter-spacing:2px;margin-bottom:14px; }
-    .hero-title { color:#f8fafc;font-size:44px;line-height:1.08;font-weight:800;letter-spacing:-1.5px; } .hero-title span { background:linear-gradient(90deg,#67e8f9,#818cf8);-webkit-background-clip:text;color:transparent; }
-    .hero-text { color:#94a3b8;font-size:15px;max-width:690px;line-height:1.7;margin-top:16px; }
-    .action-card,.kpi-card,.flow-card,.score-card { background:rgba(13,27,45,.82);border:1px solid var(--line);border-radius:18px; }
-    .action-card { min-height:84px;padding:17px;display:flex;align-items:center;gap:14px;margin-bottom:8px;transition:.2s; } .action-card:hover { transform:translateY(-2px);border-color:rgba(103,232,249,.35); }
-    .action-icon { width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(99,102,241,.13);font-size:20px; } .action-card b { color:#f8fafc;font-size:14px; } .action-card small { color:#64748b;font-size:11px; }
-    .kpi-card { padding:20px;min-height:130px; } .kpi-tag { color:#64748b;font-size:9px;font-weight:800;letter-spacing:1.4px; } .kpi-value { color:#f8fafc;font-size:31px;font-weight:800;margin-top:14px; } .kpi-label { color:#94a3b8;font-size:12px;margin-top:3px; }
-    .section-heading span { color:#67e8f9;font-size:9px;font-weight:800;letter-spacing:1.7px; } .section-heading h2 { color:#f8fafc;font-size:22px;margin:4px 0 16px; } .section-gap { height:10px; }
-    .panel-title { color:#f8fafc;font-size:15px;font-weight:700;margin-bottom:12px; }
-    .flow-card { padding:20px 22px; } .flow-step { display:flex;gap:14px;align-items:center; } .flow-number { min-width:35px;height:35px;border-radius:11px;display:grid;place-items:center;background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(99,102,241,.18));color:#67e8f9;font-size:10px;font-weight:800; } .flow-step b { display:block;color:#e2e8f0;font-size:13px; } .flow-step small { display:block;color:#64748b;font-size:10px;margin-top:3px; } .flow-line { width:1px;height:18px;background:rgba(103,232,249,.2);margin:4px 0 4px 17px; }
-    .career-name { color:#f8fafc;font-size:20px;font-weight:800; } .career-count { color:#64748b;font-size:11px;margin:3px 0 14px; } .skill-row { padding:9px 11px;border-bottom:1px solid rgba(148,163,184,.08);color:#cbd5e1;font-size:12px; } .skill-row span { color:#67e8f9;margin-right:8px; }
-    .score-card { padding:18px; } .score-title { color:#94a3b8;font-size:11px; } .score-value { color:#f8fafc;font-size:25px;font-weight:800;margin:8px 0 10px; } .score-track { height:6px;border-radius:99px;background:#17283b;overflow:hidden; } .score-fill { height:100%;border-radius:99px;background:linear-gradient(90deg,#22d3ee,#818cf8); }
-    .insight-banner { display:flex;gap:14px;align-items:center;padding:18px 20px;border:1px solid rgba(103,232,249,.15);border-radius:18px;background:linear-gradient(90deg,rgba(34,211,238,.06),rgba(99,102,241,.06)); } .insight-icon { font-size:24px; } .insight-banner b { color:#f8fafc;font-size:13px; } .insight-banner span { color:#94a3b8;font-size:11px;line-height:1.6; } .model-badge { margin-top:16px;color:#67e8f9;font-size:10px;font-weight:700;letter-spacing:.5px; } .offline-badge { color:#fda4af; }
-    div.stButton > button { border-radius:11px;border:1px solid rgba(103,232,249,.15);background:rgba(13,27,45,.9);color:#cbd5e1;font-weight:600;transition:.2s; } div.stButton > button:hover { border-color:rgba(103,232,249,.45);color:#67e8f9; }
-    [data-testid="stMetricValue"] { color:#f8fafc; } .stProgress > div > div { background:linear-gradient(90deg,#22d3ee,#818cf8); }
-    input, textarea { background:#0b192a !important;color:#e2e8f0 !important; }
-    footer { visibility:hidden; }
-    @media (max-width:900px) { .hero-title {font-size:32px;} .hero {padding:30px 24px;} }
+
+    .main-title {
+        font-size: 42px;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+
+    .subtitle {
+        font-size: 18px;
+        margin-bottom: 30px;
+    }
+
+    .card {
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid rgba(128,128,128,0.25);
+        margin-bottom: 15px;
+    }
+
+    .big-number {
+        font-size: 32px;
+        font-weight: 700;
+    }
+
     </style>
-    """, unsafe_allow_html=True
+    """,
+    unsafe_allow_html=True
 )
 
 
@@ -305,42 +310,27 @@ def generate_roadmap(missing_skills):
 
 with st.sidebar:
 
-    st.markdown("""
-    <div class="brand-box">
-        <div class="brand-icon">🎓</div>
-        <div>
-            <div class="brand-title">AI Student</div>
-            <div class="brand-subtitle">Intelligence System</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown("<div class='nav-label'>WORKSPACE</div>", unsafe_allow_html=True)
-
-    page = st.radio(
-    "Navigation",
-    [
-        "🏠 Dashboard",
-        "👨‍🎓 Student Analysis",
-        "💼 Career Intelligence",
-        "🛣️ Skill Roadmap",
-        "📊 Model Evaluation"
-    ],
-    label_visibility="collapsed"
-   )
-
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-    st.markdown("<div class='nav-label'>SYSTEM STATUS</div>", unsafe_allow_html=True)
-
-    status_text = "ONLINE" if MODEL_AVAILABLE else "OFFLINE"
-    status_class = "online" if MODEL_AVAILABLE else "offline"
     st.markdown(
-        f"<div class='status-pill {status_class}'><span></span>{status_text} · ML MODEL</div>",
-        unsafe_allow_html=True
+        "# 🎓 AI Student\n# Intelligence"
     )
 
-    st.markdown("<div class='sidebar-divider'></div>", unsafe_allow_html=True)
-    st.caption("Built with Python · Scikit-learn · Streamlit")
+    st.markdown("---")
+
+    page = st.radio(
+        "Navigation",
+        [
+            "🏠 Dashboard",
+            "👨‍🎓 Student Analysis",
+            "💼 Career Intelligence",
+            "🛣️ Skill Roadmap"
+        ]
+    )
+
+    st.markdown("---")
+
+    st.caption(
+        "AI Student Success & Career Intelligence System"
+    )
 
 
 # ============================================================
@@ -349,109 +339,136 @@ with st.sidebar:
 
 if page == "🏠 Dashboard":
 
-    # Hero
-    st.markdown("""
-    <div class="hero">
-        <div class="hero-eyebrow">✦ AI-POWERED STUDENT ANALYTICS</div>
-        <div class="hero-title">Your academic journey,<br><span>decoded by AI.</span></div>
-        <div class="hero-text">Understand academic outcomes, discover career gaps, and turn your next steps into a clear learning plan.</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        '<div class="main-title">🎓 AI Student Intelligence System</div>',
+        unsafe_allow_html=True
+    )
 
-    # Primary actions
-    a1, a2, a3 = st.columns([1, 1, 1], gap="medium")
-    with a1:
-        st.markdown("<div class='action-card'><div class='action-icon'>🎯</div><div><b>Predict Outcome</b><br><small>Analyze student performance</small></div></div>", unsafe_allow_html=True)
-        if st.button("Open Student Analysis →", key="dash_student", use_container_width=True):
-            st.session_state["dashboard_jump"] = "👨‍🎓 Student Analysis"
-            st.rerun()
-    with a2:
-        st.markdown("<div class='action-card'><div class='action-icon'>💼</div><div><b>Explore Career</b><br><small>Find your skill gaps</small></div></div>", unsafe_allow_html=True)
-        if st.button("Open Career Intelligence →", key="dash_career", use_container_width=True):
-            st.session_state["dashboard_jump"] = "💼 Career Intelligence"
-            st.rerun()
-    with a3:
-        st.markdown("<div class='action-card'><div class='action-icon'>🛣️</div><div><b>Build Roadmap</b><br><small>Turn gaps into action</small></div></div>", unsafe_allow_html=True)
-        if st.button("Open Skill Roadmap →", key="dash_roadmap", use_container_width=True):
-            st.session_state["dashboard_jump"] = "🛣️ Skill Roadmap"
-            st.rerun()
+    st.markdown(
+        '<div class="subtitle">'
+        "Student Outcome Prediction + Career Intelligence + Personalized Roadmap"
+        "</div>",
+        unsafe_allow_html=True
+    )
 
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-
-    # Platform overview
-    st.markdown("<div class='section-heading'><span>LIVE OVERVIEW</span><h2>Intelligence at a glance</h2></div>", unsafe_allow_html=True)
-    k1, k2, k3, k4 = st.columns(4, gap="medium")
-    metrics = [
-        (k1, "4,424", "Students analyzed", "DATASET"),
-        (k2, "39", "Model features", "SIGNALS"),
-        (k3, "3", "Outcome classes", "PREDICTION"),
-        (k4, str(len(career_skills)), "Career paths", "CAREER AI"),
-    ]
-    for col, value, label, tag in metrics:
-        with col:
-            st.markdown(f"<div class='kpi-card'><div class='kpi-tag'>{tag}</div><div class='kpi-value'>{value}</div><div class='kpi-label'>{label}</div></div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-
-    left, right = st.columns([1.35, 1], gap="large")
-
-    with left:
-        st.markdown("<div class='panel-title'>🧠 How the intelligence engine works</div>", unsafe_allow_html=True)
-        st.markdown("""
-        <div class="flow-card">
-            <div class="flow-step"><div class="flow-number">01</div><div><b>Academic Profile</b><small>39 academic, demographic and economic signals</small></div></div>
-            <div class="flow-line"></div>
-            <div class="flow-step"><div class="flow-number">02</div><div><b>Random Forest</b><small>Analyzes patterns from historical student data</small></div></div>
-            <div class="flow-line"></div>
-            <div class="flow-step"><div class="flow-number">03</div><div><b>Outcome Intelligence</b><small>Dropout · Enrolled · Graduate probabilities</small></div></div>
-            <div class="flow-line"></div>
-            <div class="flow-step"><div class="flow-number">04</div><div><b>Career Action Plan</b><small>Skill gaps → personalized learning roadmap</small></div></div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with right:
-        st.markdown("<div class='panel-title'>⚡ Quick career explorer</div>", unsafe_allow_html=True)
-        dash_career = st.selectbox("Choose a career", list(career_skills.keys()), key="dashboard_career_select", label_visibility="collapsed")
-        req = career_skills[dash_career]
-        st.markdown(f"<div class='career-name'>{dash_career}</div><div class='career-count'>{len(req)} core skills</div>", unsafe_allow_html=True)
-        for skill in req[:5]:
-            st.markdown(f"<div class='skill-row'><span>✓</span>{skill}</div>", unsafe_allow_html=True)
-        if len(req) > 5:
-            st.caption(f"+ {len(req)-5} more skills in Career Intelligence")
-        if st.button("Explore this career →", key="dash_explore", use_container_width=True):
-            st.session_state["selected_career"] = dash_career
-            st.session_state["dashboard_jump"] = "💼 Career Intelligence"
-            st.rerun()
-
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-
-    # Interactive readiness simulator
-    st.markdown("<div class='section-heading'><span>INTERACTIVE</span><h2>Student readiness simulator</h2></div>", unsafe_allow_html=True)
-    st.caption("Adjust the academic indicators to see how the dashboard communicates student progress. This is a visual simulator; the actual ML prediction is performed in Student Analysis.")
-    s1, s2, s3 = st.columns(3, gap="medium")
-    with s1:
-        sim_sem1 = st.slider("Semester 1 approval", 0, 100, 80, 5, key="sim_sem1")
-    with s2:
-        sim_sem2 = st.slider("Semester 2 approval", 0, 100, 75, 5, key="sim_sem2")
-    with s3:
-        sim_skills = st.slider("Career skill coverage", 0, 100, 60, 5, key="sim_skills")
-
-    avg = (sim_sem1 + sim_sem2) / 2
-    overall = round((avg * 0.65) + (sim_skills * 0.35), 1)
-    r1, r2, r3 = st.columns(3, gap="medium")
-    for col, title, val, suffix in [(r1, "Academic Index", avg, "%"), (r2, "Career Readiness", sim_skills, "%"), (r3, "Overall Profile", overall, "%")]:
-        with col:
-            st.markdown(f"<div class='score-card'><div class='score-title'>{title}</div><div class='score-value'>{val:.1f}{suffix}</div><div class='score-track'><div class='score-fill' style='width:{min(val,100)}%'></div></div></div>", unsafe_allow_html=True)
-
-    st.markdown("<div class='section-gap'></div>", unsafe_allow_html=True)
-
-    # Product value
-    st.markdown("<div class='insight-banner'><div class='insight-icon'>💡</div><div><b>Start with your profile</b><br><span>Run a student analysis first. Then use Career Intelligence to identify missing skills and generate a focused roadmap.</span></div></div>", unsafe_allow_html=True)
+    # --------------------------------------------------------
+    # MODEL STATUS
+    # --------------------------------------------------------
 
     if MODEL_AVAILABLE:
-        st.markdown("<div class='model-badge'>● MODEL ONLINE &nbsp;·&nbsp; Random Forest &nbsp;·&nbsp; Prediction ready</div>", unsafe_allow_html=True)
+
+        st.success(
+            "🟢 Machine Learning Model Connected"
+        )
+
     else:
-        st.markdown("<div class='model-badge offline-badge'>● MODEL OFFLINE &nbsp;·&nbsp; Check model path</div>", unsafe_allow_html=True)
+
+        st.error(
+            "🔴 Machine Learning Model Could Not Be Loaded"
+        )
+
+        st.code(
+            MODEL_ERROR
+        )
+
+    st.markdown("## 🚀 What This System Does")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+
+        st.markdown(
+            """
+            <div class="card">
+
+            <h3>👨‍🎓 Student Prediction</h3>
+
+            <p>
+            Predict whether a student's academic
+            outcome is likely to be Dropout,
+            Enrolled or Graduate.
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col2:
+
+        st.markdown(
+            """
+            <div class="card">
+
+            <h3>💼 Career Intelligence</h3>
+
+            <p>
+            Compare current skills with the
+            skills required for a target career.
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col3:
+
+        st.markdown(
+            """
+            <div class="card">
+
+            <h3>🛣️ Skill Roadmap</h3>
+
+            <p>
+            Generate a personalized learning
+            roadmap based on missing skills.
+            </p>
+
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    st.markdown("---")
+
+    st.markdown("## 📊 Project Pipeline")
+
+    pipeline_col1, pipeline_col2, pipeline_col3, pipeline_col4 = st.columns(4)
+
+    with pipeline_col1:
+
+        st.metric(
+            "Dataset",
+            "4,424 Students"
+        )
+
+    with pipeline_col2:
+
+        st.metric(
+            "ML Model",
+            "Random Forest"
+        )
+
+    with pipeline_col3:
+
+        st.metric(
+            "Prediction",
+            "3 Classes"
+        )
+
+    with pipeline_col4:
+
+        st.metric(
+            "Career Paths",
+            len(career_skills)
+        )
+
+    st.markdown("---")
+
+    st.info(
+        "💡 Start with **Student Analysis** to make an ML prediction."
+    )
 
 
 # ============================================================
@@ -1086,8 +1103,7 @@ elif page == "💼 Career Intelligence":
 
     career = st.selectbox(
         "🎯 Target Career",
-        list(career_skills.keys()),
-        index=list(career_skills.keys()).index(st.session_state.get("selected_career", list(career_skills.keys())[0])) if st.session_state.get("selected_career", list(career_skills.keys())[0]) in career_skills else 0
+        list(career_skills.keys())
     )
 
     skills_text = st.text_area(
@@ -1271,101 +1287,7 @@ elif page == "🛣️ Skill Roadmap":
                 "the listed requirements."
             )
 
-# ============================================================
-# MODEL EVALUATION
-# ============================================================
 
-elif page == "📊 Model Evaluation":
-
-    st.title("📊 Model Evaluation")
-
-    st.write(
-        "Performance analysis of the trained "
-        "student outcome prediction model."
-    )
-
-    if not MODEL_AVAILABLE:
-
-        st.error(
-            "The ML model is not available."
-        )
-
-    else:
-
-        evaluation = get_evaluation()
-
-        # ----------------------------------------------------
-        # MODEL METRICS
-        # ----------------------------------------------------
-
-        st.markdown("### 📈 Model Performance")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-
-            st.metric(
-                "Accuracy",
-                f"{evaluation['accuracy'] * 100:.2f}%"
-            )
-
-        with col2:
-
-            st.metric(
-                "Macro F1 Score",
-                f"{evaluation['macro_f1'] * 100:.2f}%"
-            )
-
-        with col3:
-
-            st.metric(
-                "Test Samples",
-                evaluation["test_samples"]
-            )
-
-        st.markdown("---")
-
-        # ----------------------------------------------------
-        # CLASSIFICATION REPORT
-        # ----------------------------------------------------
-
-        st.markdown("### 📋 Classification Report")
-
-        st.dataframe(
-            evaluation["report_df"].round(3),
-            use_container_width=True
-        )
-
-        st.markdown("---")
-
-        # ----------------------------------------------------
-        # CONFUSION MATRIX
-        # ----------------------------------------------------
-
-        st.markdown("### 🎯 Confusion Matrix")
-
-        st.dataframe(
-            evaluation["confusion_matrix_df"],
-            use_container_width=True
-        )
-
-        st.markdown("---")
-
-        # ----------------------------------------------------
-        # FEATURE IMPORTANCE
-        # ----------------------------------------------------
-
-        st.markdown("### 🔎 Top Feature Importance")
-
-        feature_importance = (
-            evaluation["feature_importance"]
-            .head(15)
-        )
-
-        st.bar_chart(
-            feature_importance
-        )
-        
 # ============================================================
 # FOOTER
 # ============================================================
