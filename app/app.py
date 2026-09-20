@@ -2,11 +2,9 @@
 # AI STUDENT INTELLIGENCE SYSTEM
 # Streamlit Application
 # ============================================================
-
 import streamlit as st
 import os
 import sys
-from evaluation import get_evaluation
 
 # ============================================================
 # PATH CONFIGURATION
@@ -26,7 +24,12 @@ SRC_DIR = os.path.join(
 if SRC_DIR not in sys.path:
     sys.path.insert(0, SRC_DIR)
 
+# ============================================================
+# PROJECT IMPORTS
+# ============================================================
 
+from prediction import predict_student
+from evaluation import get_evaluation
 # ============================================================
 # IMPORT ML PREDICTION
 # ============================================================
@@ -1365,7 +1368,7 @@ elif page == "📊 Model Evaluation":
         st.bar_chart(
             feature_importance
         )
-        
+
 # ============================================================
 # FOOTER
 # ============================================================
